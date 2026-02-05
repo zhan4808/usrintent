@@ -1,0 +1,79 @@
+{
+  "exported_at": "2026-02-05T01:02:16Z",
+  "intents": [
+    {
+      "id": "intent_12ba27ba",
+      "description": "Add CSV parser with error handling",
+      "task_type": "code",
+      "status": "draft",
+      "created_at": "2026-02-05T00:42:51Z",
+      "updated_at": "2026-02-05T01:02:09Z",
+      "constraints": [
+        "no deps",
+        "keep public API"
+      ],
+      "done_criteria": [
+        "tests pass",
+        "no lint errors"
+      ]
+    },
+    {
+      "id": "intent_99c77c60",
+      "description": "Add CSV parser with error handling",
+      "task_type": "code",
+      "status": "draft",
+      "created_at": "2026-02-05T00:45:37Z",
+      "updated_at": "2026-02-05T00:45:37Z",
+      "constraints": [
+        "no deps",
+        "keep public API"
+      ],
+      "done_criteria": [
+        "tests pass",
+        "no lint errors"
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "id": "prompt_fb36916b",
+      "intent_id": "intent_12ba27ba",
+      "content": "Task:\nAdd CSV parser with error handling\nTask type:\ncode\nConstraints:\n- no deps\n- keep public API\nDone criteria:\n- tests pass\n- no lint errors\nRespond with the best possible solution.",
+      "created_at": "2026-02-05T00:46:59Z",
+      "derived_from": null,
+      "judge_score": 0.43,
+      "user_rating": 4.0,
+      "output": "[mock output] Add CSV parser with error handling"
+    },
+    {
+      "id": "prompt_0aa119ac",
+      "intent_id": "intent_12ba27ba",
+      "content": "Task:\nAdd CSV parser with error handling\nTask type:\ncode\nConstraints:\n- no deps\n- keep public API\nDone criteria:\n- tests pass\n- no lint errors\nRespond with the best possible solution.\n\nRefinement notes:\n- No user edits provided.\nUpdate the response to incorporate the notes.",
+      "created_at": "2026-02-05T00:49:10Z",
+      "derived_from": "prompt_fb36916b",
+      "judge_score": 0.427,
+      "user_rating": null,
+      "output": "[mock refined output] intent_12ba27ba"
+    },
+    {
+      "id": "prompt_c279b456",
+      "intent_id": "intent_12ba27ba",
+      "content": "Task:\nAdd CSV parser with error handling\nTask type:\ncode\nConstraints:\n- no deps\n- keep public API\nDone criteria:\n- tests pass\n- no lint errors\nRespond with the best possible solution.",
+      "created_at": "2026-02-05T01:02:09Z",
+      "derived_from": null,
+      "judge_score": 0.82,
+      "user_rating": null,
+      "output": "To implement a CSV parser with error handling while adhering to the constraints of not using any dependencies and maintaining the public API, we can create a simple CSV parser in JavaScript. Below is an implementation that meets these criteria, along with error handling for common issues such as malformed CSV data.\n\n### CSV Parser Implementation\n\n```javascript\nclass CSVParser {\n    constructor() {\n        this.delimiter = ',';\n    }\n\n    parse(csvString) {\n        if (typeof csvString !== 'string') {\n            throw new Error('Input must be a string');\n        }\n\n        const rows = csvString.split('\\n');\n        const result = [];\n        const headers = this._parseHeaders(rows[0]);\n\n        for (let i = 1; i < rows.length; i++) {\n            const row = this._parseRow(rows[i], headers.length);\n            if (row) {\n                result.push(row);\n            }\n        }\n\n        return result;\n    }\n\n    _parseHeaders(headerRow) {\n        const headers = headerRow.split(this.delimiter).map(header => header.trim());\n        return headers;\n    }\n\n    _parseRow(row, expectedLength) {\n        const values = row.split(this.delimiter).map(value => value.trim());\n\n        if (values.length !== expectedLength) {\n            console.error(`Row has incorrect number of columns: ${row}`);\n            return null; // Skip this row\n        }\n\n        return values;\n    }\n}\n\n// Example usage\nconst csvString = `name,age,city\nAlice,30,New York\nBob,25,Los Angeles\nCharlie,35`;\n\nconst parser = new CSVParser();\ntry {\n    const result = parser.parse(csvString);\n    console.log(result);\n} catch (error) {\n    console.error('Error parsing CSV:', error.message);\n}\n```\n\n### Explanation\n\n1. **CSVParser Class**: This class contains methods to parse a CSV string.\n2. **parse Method**: This is the public method that takes a CSV string as input and returns an array of parsed rows. It checks if the input is a string and splits the input into rows.\n3. **_parseHeaders Method**: This private method processes the header row to extract column names.\n4. **_parseRow Method**: This private method processes each row, checks for the correct number of columns, and trims whitespace. If a row has an incorrect number of columns, it logs an error and skips that row.\n5. **Error Handling**: The parser throws an error if the input is not a string and logs an error for rows with incorrect column counts.\n\n### Testing\n\nYou can test the parser by running the example usage provided in the code. You can also create additional test cases to ensure that the parser handles various edge cases, such as empty rows, rows with extra delimiters, and so on.\n\n### Linting\n\nMake sure to run a linter (like ESLint) on the code to ensure there are no lint errors. The provided code should pass standard linting rules.\n\n### Conclusion\n\nThis implementation provides a basic CSV parser with error handling while adhering to the constraints of no dependencies and maintaining a public API. You can extend the functionality further as needed."
+    }
+  ],
+  "feedback": [
+    {
+      "id": "fb_7bff4ecf",
+      "prompt_id": "prompt_fb36916b",
+      "user_rating": 4.0,
+      "user_edits": null,
+      "created_at": "2026-02-05T00:48:57Z",
+      "judge_scores": {}
+    }
+  ]
+}
