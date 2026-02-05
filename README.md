@@ -10,19 +10,25 @@ Intent refinement CLI with feedback loops, scoring, prompt versioning, and promp
 - Sync (v0): database copy between CLI and desktop paths.
 
 ### Quick Start
-1) Create `.usrintent.env` in the repo:
-   OPENAI_API_KEY=your_key_here  
-   ANTHROPIC_API_KEY=your_key_here  
-   USRINTENT_PROVIDER=openai  
-   USRINTENT_DESKTOP_DB=/Users/you/Library/Application Support/usrintent/usrintent.sqlite  
-   USRINTENT_SHARE_DIR=/Users/you/Library/Application Support/usrintent/share  
+Create `.usrintent.env` in the repo:
 
-2) Run:
-   ./usrintent intent new "Add CSV parser with error handling" --type=code --constraints="no deps,keep public API" --done-criteria="tests pass,no lint errors"  
-   ./usrintent run intent_XXXXXXXX --provider=openai --model=gpt-4o-mini  
-   ./usrintent feedback prompt_XXXXXXXX --rating=4 --edit-file=diff.patch  
-   ./usrintent refine intent_XXXXXXXX  
-   ./usrintent history intent_XXXXXXXX  
+```text
+OPENAI_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_key_here
+USRINTENT_PROVIDER=openai
+USRINTENT_DESKTOP_DB=/Users/you/Library/Application Support/usrintent/usrintent.sqlite
+USRINTENT_SHARE_DIR=/Users/you/Library/Application Support/usrintent/share
+```
+
+Run a simple loop:
+
+```bash
+./usrintent intent new "Add CSV parser with error handling" --type=code --constraints="no deps,keep public API" --done-criteria="tests pass,no lint errors"
+./usrintent run intent_XXXXXXXX --provider=openai --model=gpt-4o-mini
+./usrintent feedback prompt_XXXXXXXX --rating=4 --edit-file=diff.patch
+./usrintent refine intent_XXXXXXXX
+./usrintent history intent_XXXXXXXX
+```
 
 ### Commands
 | Command | Purpose |
@@ -40,18 +46,21 @@ Intent refinement CLI with feedback loops, scoring, prompt versioning, and promp
 | `sync push/pull/status` | Mirror CLI and desktop DB |
 
 ### Prompt Sharing (v0)
-Share uses a single JSON file in `USRINTENT_SHARE_DIR`.  
-- `share push` exports prompts + ratings  
-- `share pull` imports new prompts into the target DB  
+Share uses a single JSON file in `USRINTENT_SHARE_DIR`.
+
+```bash
+./usrintent share status
+./usrintent share push
+./usrintent share pull
+```
 
 ### Current Sync (v0)
-This is a direct database copy between CLI and Desktop paths.  
-- Push: CLI → Desktop  
-- Pull: Desktop → CLI  
+This is a direct database copy between CLI and Desktop paths.
 
-Example:
-./usrintent sync status  
-./usrintent sync push --interactive  
+```bash
+./usrintent sync status
+./usrintent sync push --interactive
+```
 
 ### Why the current sync is limited
 It copies the CLI database only. It does not:
