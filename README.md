@@ -64,7 +64,6 @@ This is a direct database copy between CLI and Desktop paths.
 
 ### Why the current sync is limited
 It copies the CLI database only. It does not:
-- transform Claude Code skills/plugins into Desktop DXT extensions
 - sync MCP server configs
 - resolve conflicts via diffs/checkboxes
 - do registry lookups
@@ -74,10 +73,8 @@ It copies the CLI database only. It does not:
 Goal: full bidirectional sync with transformation and diff review.
 
 Feature checklist
-- Bidirectional sync: Code → Desktop or Desktop → Code
-- Format transformation: Skills/Plugins ↔ DXT Extensions
+- sync: Code → Desktop or Desktop → Code
 - MCP server sync: Claude Code settings ↔ Desktop config
-- Registry lookup: use official DXT when available
 - Interactive UI: checkboxes + diff preview
 - Auto-backup + rollback
 
