@@ -11,6 +11,7 @@ Command List (short)
 - export/import: backup or restore JSON
 - watch start|stop|status: reminders
 - sync push|pull|status: sync CLI and desktop databases
+- share push|pull|status: share refined prompts/ratings
 
 Setup
 - Python 3 required. Database file defaults to ./usrintent.sqlite.
@@ -71,8 +72,14 @@ Sync
 - python3 usrintent_cli.py sync pull
 - python3 usrintent_cli.py sync push --interactive
 
+Share
+- python3 usrintent_cli.py share status
+- python3 usrintent_cli.py share push
+- python3 usrintent_cli.py share pull
+
 Env file example (.usrintent.env)
 OPENAI_API_KEY=your_key_here
 ANTHROPIC_API_KEY=your_key_here
 USRINTENT_PROVIDER=openai
 USRINTENT_DESKTOP_DB=/Users/you/Library/Application Support/usrintent/usrintent.sqlite
+USRINTENT_SHARE_DIR=/Users/you/Library/Application Support/usrintent/share

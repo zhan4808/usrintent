@@ -24,6 +24,10 @@ DEFAULT_DESKTOP_DB = os.path.expanduser(
 DEFAULT_SYNC_DIR = os.path.expanduser(
     os.environ.get("USRINTENT_SYNC_DIR", "~/.usrintent_sync")
 )
+DEFAULT_SHARE_DIR = os.path.expanduser(
+    os.environ.get("USRINTENT_SHARE_DIR", "~/Library/Application Support/usrintent/share")
+)
+DEFAULT_SHARE_FILE = "prompt_library.json"
 
 
 def now_iso() -> str:
@@ -173,6 +177,17 @@ def save_manifest(sync_dir: str, manifest: Dict[str, Any]) -> None:
     manifest_path = os.path.join(sync_dir, "manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2)
+
+
+def average_rating(conn: sqlite3.Connection, prompt_id: str) -> Optional[float]:
+    rows = conn.execute(
+        "SELECT user_rating FROM feedback WHERE prompt_id = ? AND user_rating IS NOT NULL",
+        (prompt_id,),
+    ).fetchall()
+    if not rows:
+        return None
+    values = [row["user_rating"] for row in rows]
+    return round(sum(values) / len(values), 3)
 
 
 def call_openai(model: str, prompt: str, temperature: float, max_tokens: int) -> str:
@@ -689,6 +704,108 @@ def cmd_sync(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
     )
 
 
+def build_prompt_library(conn: sqlite3.Connection) -> Dict[str, Any]:
+    prompts = conn.execute(
+        """
+        SELECT p.id, p.intent_id, p.content, p.created_at, p.derived_from, p.judge_score, p.user_rating, p.output,
+               i.description AS intent_description
+        FROM prompts p
+        JOIN intents i ON i.id = p.intent_id
+        ORDER BY p.created_at DESC
+        """
+    ).fetchall()
+    entries = []
+    for row in prompts:
+        avg_rating = average_rating(conn, row["id"])
+        rating = row["user_rating"] if row["user_rating"] is not None else avg_rating
+        entries.append(
+            {
+                "prompt_id": row["id"],
+                "intent_id": row["intent_id"],
+                "intent_description": row["intent_description"],
+                "content": row["content"],
+                "created_at": row["created_at"],
+                "derived_from": row["derived_from"],
+                "judge_score": row["judge_score"],
+                "user_rating": rating,
+            }
+        )
+    return {
+        "exported_at": now_iso(),
+        "count": len(entries),
+        "prompts": entries,
+    }
+
+
+def cmd_share(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+    ensure_dir(args.share_dir)
+    share_path = os.path.join(args.share_dir, DEFAULT_SHARE_FILE)
+    if args.action == "push":
+        payload = build_prompt_library(conn)
+        with open(share_path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
+        print(share_path)
+        return
+    if args.action == "pull":
+        if not os.path.exists(share_path):
+            raise SystemExit(f"Share file not found: {share_path}")
+        with open(share_path, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        imported = 0
+        for item in payload.get("prompts", []):
+            prompt_id = item["prompt_id"]
+            exists = conn.execute("SELECT 1 FROM prompts WHERE id = ?", (prompt_id,)).fetchone()
+            if exists:
+                continue
+            intent_id = item["intent_id"]
+            intent_exists = conn.execute("SELECT 1 FROM intents WHERE id = ?", (intent_id,)).fetchone()
+            if not intent_exists:
+                conn.execute(
+                    """
+                    INSERT INTO intents (id, description, task_type, constraints_json, done_criteria_json, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        intent_id,
+                        item.get("intent_description", "Imported intent"),
+                        None,
+                        json.dumps([]),
+                        json.dumps([]),
+                        "imported",
+                        now_iso(),
+                        now_iso(),
+                    ),
+                )
+            conn.execute(
+                """
+                INSERT INTO prompts (id, intent_id, content, created_at, derived_from, judge_score, user_rating, output)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    prompt_id,
+                    intent_id,
+                    item["content"],
+                    item.get("created_at", now_iso()),
+                    item.get("derived_from"),
+                    item.get("judge_score"),
+                    item.get("user_rating"),
+                    None,
+                ),
+            )
+            imported += 1
+        conn.commit()
+        print(json.dumps({"imported": imported}, indent=2))
+        return
+    status = {
+        "share_dir": args.share_dir,
+        "share_file": share_path,
+        "exists": os.path.exists(share_path),
+    }
+    if status["exists"]:
+        status["updated_at"] = datetime.fromtimestamp(os.path.getmtime(share_path)).isoformat()
+    print(json.dumps(status, indent=2))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="usrintent", description="Intent refinement CLI")
     parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
@@ -768,6 +885,11 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser.add_argument("--sync-dir", default=DEFAULT_SYNC_DIR)
     sync_parser.add_argument("--interactive", action="store_true")
     sync_parser.set_defaults(func=cmd_sync)
+
+    share_parser = subparsers.add_parser("share", help="Share prompt library between CLI and desktop")
+    share_parser.add_argument("action", choices=["push", "pull", "status"])
+    share_parser.add_argument("--share-dir", default=DEFAULT_SHARE_DIR)
+    share_parser.set_defaults(func=cmd_share)
 
     return parser
 

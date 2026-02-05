@@ -1,1 +1,5 @@
 .usrintent.env
+usrintent.sqlite
+usrintent_export.json
+.usrintent_watch
+.usrintent_sync/
